@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Censurator\Censurator;
 use App\Entity\Wish;
 use App\Form\AddWishType;
 use App\Repository\WishRepository;
@@ -14,6 +15,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class WishController extends AbstractController
 {
+
     /**
      * @Route("/wish/list", name="wish_list")
      */
@@ -36,11 +38,19 @@ class WishController extends AbstractController
         $newWish = new Wish();
         $newWish->setDateCreated(new\DateTime());
         $newWish->setIsPublished(1);
+
+
         $wishForm = $this ->createForm(AddWishType::class, $newWish);
 
         $wishForm->handleRequest($request);
 
         if($wishForm->isSubmitted() && $wishForm->isValid()) {
+
+            //censure les méchants mots
+            $censurator = new Censurator;
+            $purifiedDescription = $censurator->purify($newWish->getDescription());
+            $newWish->setDescription($purifiedDescription);
+
             $entityManager->persist($newWish);
             $entityManager->flush();
             $this->addFlash('success','Votre souhait a ete cree');
